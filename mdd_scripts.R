@@ -12,37 +12,6 @@ library('csodata')
 
 
 
-RSM <- cso_get_data(
-  "RSM05",
-  wide_format = "long",
-  include_ids = FALSE,
-  id_list = NULL,
-  use_factors = TRUE,
-  cache = FALSE
-)
-RSM <- clean_names(RSM)
-RSM <- subset(RSM, statistic=="Retail Sales Index Volume Adjusted",
-              select=c(month, nace_group, value)) 
-
-
-rebase <- read.csv('rebase_factors.csv')
-RSM$nace_group <- as.character(RSM$nace_group)
-
-RSM <- merge(RSM, rebase, by ="nace_group")
-RSM <- RSM %>% mutate(value_r = value*factor)
-RSM_spread <- subset(RSM, select=c(value_r, month, nace_group))
-RSM_spread <- spread(RSM_spread, nace_group, value_r)
-RSM_spread <- tail(RSM_spread, n=24)
-
-write.csv(RSM_spread[,c("month",
-                        "All retail businesses, excluding motor trades",
-                        "Department stores (4719)",
-                        "Retail sale of pharmaceutical, medical and cosmetic articles (4773 to 4775)",
-                        "Retail sale of hardware, paints and glass (4752)",
-                        "Retail sale of electrical goods (4741 to 4743,4754)",
-                        "Retail sale of books, newspapers and stationery (4761,4762)"
-)], file="retailsales.csv",row.names=TRUE)
-
 
 #Industrial Production Update
 
@@ -87,6 +56,20 @@ write.csv(MIM_spread[,c("month",
                         "Rubber and plastic products (22)",
                         "Other non-metallic mineral products (23)"
 )], file="indprod.csv",row.names=TRUE)
+MIM <- select(MIM_spread, c("month",
+                "Traditional sector (05 to 17,181,19,22 to 25,28 to 31,321 to 324,329,33,35)",
+                "Food products (10)",
+                "Paper and paper products, printing and reproduction of recorded media (17,18)",
+                "Transport equipment (29,30)",
+                "Other foods (102 to 104,108)",
+                "Grain mill and starch products; prepared animal feeds (106,109)",
+                "Meat and meat products (101)",
+                "Dairy products (105)",
+                "Bakery and farinaceous products (107)",
+                "Wood and wood products, except furniture (16)",
+                "Rubber and plastic products (22)",
+                "Other non-metallic mineral products (23)"
+))
 
 ur <- cso_get_data(
   "MUM02",
@@ -125,7 +108,10 @@ write.csv(vehicles[,c("month",
                         "all_vehicles",
                         "new_vehicles"
 )], file="vehicles.csv",row.names=TRUE)
-
+vehicles <- select(vehicles, c("month",
+                                "all_vehicles",
+                                "new_vehicles"
+))
 
 rppi <- cso_get_data(
   "HPM09",
@@ -146,6 +132,12 @@ write.csv(rppi[,c("national_all_residential_properties",
                       "national_houses",
                       "national_apartments"
 )], file="rppi.csv",row.names=TRUE)
+
+rppi <- select(rppi, c("month",
+                       "national_all_residential_properties",
+                               "national_houses",
+                               "national_apartments"
+))
 
 
 nhgr <- cso_get_data(
@@ -184,6 +176,13 @@ write.csv(cpi[,c("month",
                   "services"
 )], file="cpi.csv",row.names=TRUE)
 
+cpi <- select(cpi, c("month", 
+                     "cpi_excluding_mortgage_interest",
+                     "goods",
+                     "services"
+))
+
+
 #netexports
 nx <- cso_get_data(
   "TSM06",
@@ -216,5 +215,20 @@ write.csv(nx[,c("month",
                  "netimp_road"
 )], file="nx.csv",row.names=TRUE)
 
+nx <- select(nx, c("month", 
+                   "netimp_mte",
+                   "netimp_road"
+))
+
+mdd_data <- left_join(MIM_spread, ur, vehicles, rppi, nhgr, cpi, nx, by = "month", suffix=c("x", "y"))
+
+mdd_data <- left_join(MIM, ur, by ="month") %>%
+  left_join(., vehicles, by="month") %>%
+  left_join(., rppi, by="month") %>% 
+  left_join(., nhgr, by="month") %>% 
+  left_join(., cpi, by="month") %>% 
+  left_join(., nx, by="month") 
+  
+write.csv(mdd_data, file="mdd_data.csv", row.names = TRUE)
 
 
