@@ -1,7 +1,4 @@
 library("reshape2")
-library("tidyquant")
-library("quantmod")
-library("TTR")
 library("zoo")
 library("xts")
 library("rio")
@@ -9,14 +6,9 @@ library("parsedate")
 library("janitor")
 library("dplyr")
 library("tidyverse")
-library("ggplot2")
-library("readr")
-library("tidyr")
-library("tidyverse")
 
 library('csodata')
 
-setwd("C:/Users/sweeneye/Desktop/Nowcast0212/update_scripts")
 
 
 
