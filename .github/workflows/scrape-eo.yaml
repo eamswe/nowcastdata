@@ -1,24 +1,28 @@
+name: Render library update
 on:
-  schedule:
-    - cron: '0 4 * * *'
-  push:
-    branches: main
-
-name: Scrape Executive Orders
+  workflow_dispatch:
 
 jobs:
-  render:
-    name: Scrape Executive Orders
+  build:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: r-lib/actions/setup-r@v1
+
+      - uses: r-lib/actions/setup-r@master
+
+      - uses: r-lib/actions/setup-pandoc@master
+
       - name: Install dependencies
-        run: Rscript -e 'install.packages(c("rvest","dplyr","lubridate"))'
+        run: |
+          install.packages(c("csodata", "reshape2",
+          "zoo", "xts", "dygraphs", "rio", "openxlsx", "parsedate",
+          "janitor", "tidyverse", "readr", "forcats"))
+        shell: Rscript {0}
       - name: Scrape the data
-        run: Rscript scrape_exec_orders.R
+        run: Rscript mdd_scripts.R
+        
       - name: Commit results
         run: |
           git add -A
-          git commit -m 'New Executive Order signed - data updated!' || echo "No changes to commit"
+          git commit -m 'New CSO Data' || echo "No changes to commit"
           git push origin || echo "No changes to commit"
